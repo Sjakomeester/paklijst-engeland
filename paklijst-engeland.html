@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paklijst Engeland</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap');
+    :root {
+      --forest: #2C3E2D; --moss: #4A6741; --sage: #8BAF7C;
+      --sand: #E8DFC8; --dusk: #C4875A; --paper: #F5F0E8;
+      --charcoal: #1E2420; --muted: #7A8C7B; --line: rgba(44,62,45,0.12);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--charcoal); min-height: 100vh; }
+
+    header { background: var(--forest); color: var(--sand); padding: 2rem 1.25rem 1.5rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 16px rgba(0,0,0,.25); }
+    .header-inner { max-width: 720px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .header-text h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.4rem,4vw,2rem); line-height: 1.1; letter-spacing: -.02em; }
+    .header-text p { font-size: .78rem; color: var(--sage); margin-top: .2rem; letter-spacing: .04em; text-transform: uppercase; }
+    .progress-wrap { text-align: right; min-width: 90px; }
+    .progress-label { font-size: .7rem; color: var(--sage); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem; }
+    .progress-bar { height: 6px; background: rgba(255,255,255,.15); border-radius: 3px; overflow: hidden; width: 100px; }
+    .progress-fill { height: 100%; background: var(--dusk); border-radius: 3px; transition: width .4s ease; }
+    .progress-count { font-size: .8rem; color: var(--dusk); font-weight: 600; margin-top: .25rem; }
+
+    .controls { max-width: 720px; margin: 1.25rem auto .5rem; padding: 0 1.25rem; display: flex; gap: .6rem; flex-wrap: wrap; }
+    .btn { font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 600; border: 1.5px solid transparent; border-radius: 20px; padding: .4rem 1rem; cursor: pointer; transition: all .18s; letter-spacing: .03em; }
+    .btn-outline { background: transparent; border-color: var(--moss); color: var(--moss); }
+    .btn-outline:hover { background: var(--moss); color: #fff; }
+    .btn-danger { background: transparent; border-color: #c0392b; color: #c0392b; }
+    .btn-danger:hover { background: #c0392b; color: #fff; }
+    .btn-active { background: var(--moss); color: #fff; border-color: var(--moss); }
+
+    .edit-hint { max-width: 720px; margin: 0 auto .75rem; padding: 0 1.25rem; }
+    .edit-hint-inner { background: #fffbe6; border: 1px solid #f0d060; border-radius: 8px; padding: .5rem 1rem; font-size: .8rem; color: #7a6010; display: none; }
+    .edit-hint-inner.visible { display: block; }
+
+    main { max-width: 720px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+    .done-banner { display: none; text-align: center; padding: 1.5rem; background: #fff; border-radius: 12px; border: 2px solid var(--moss); margin-bottom: 1.25rem; }
+    .done-banner.visible { display: block; }
+    .done-banner .done-emoji { font-size: 2rem; display: block; margin-bottom: .4rem; }
+    .done-banner p { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--forest); }
+
+    .category { background: #fff; border-radius: 12px; margin-bottom: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 1px solid var(--line); transition: box-shadow .15s; }
+    .category.drag-over { box-shadow: 0 0 0 2px var(--moss); background: #f0f7ee; }
+    .category.is-dragging { opacity: .4; }
+
+    .cat-header { display: flex; align-items: center; padding: 1rem 1.25rem; gap: .65rem; }
+    .cat-drag-handle { cursor: grab; color: var(--muted); font-size: 1.1rem; flex-shrink: 0; display: none; user-select: none; line-height: 1; }
+    .edit-mode .cat-drag-handle { display: block; }
+    .cat-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .edit-mode .cat-icon { cursor: pointer; }
+    .cat-title { font-family: 'DM Serif Display', serif; font-size: 1.05rem; color: var(--forest); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cat-title-input { font-family: 'DM Serif Display', serif; font-size: 1.05rem; color: var(--forest); border: none; border-bottom: 2px solid var(--moss); outline: none; background: transparent; flex: 1; min-width: 0; padding: 0; }
+    .cat-badge { font-size: .7rem; font-weight: 600; border-radius: 10px; padding: .15rem .55rem; flex-shrink: 0; background: var(--sand); color: var(--muted); }
+    .cat-badge.done { background: #d4edda; color: #256040; }
+    .cat-delete-btn { display: none; background: none; border: none; color: #c0392b; cursor: pointer; font-size: .9rem; padding: .1rem .3rem; border-radius: 4px; line-height: 1; flex-shrink: 0; }
+    .edit-mode .cat-delete-btn { display: block; }
+    .cat-toggle { cursor: pointer; user-select: none; flex-shrink: 0; }
+    .cat-arrow { font-size: .75rem; color: var(--muted); display: block; transition: transform .25s; }
+    .category.open .cat-arrow { transform: rotate(180deg); }
+
+    .cat-body { display: none; border-top: 1px solid var(--line); padding-bottom: .5rem; }
+    .category.open .cat-body { display: block; }
+
+    .item { display: flex; align-items: center; gap: .75rem; padding: .55rem 1.25rem; transition: background .12s; position: relative; }
+    .item:hover { background: var(--paper); }
+    .item.is-dragging { opacity: .35; }
+    .item.drop-above { box-shadow: inset 0 2px 0 var(--moss); }
+    .item.drop-below { box-shadow: inset 0 -2px 0 var(--moss); }
+
+    .item-drag-handle { cursor: grab; color: var(--muted); font-size: 1rem; flex-shrink: 0; display: none; user-select: none; line-height: 1; }
+    .edit-mode .item-drag-handle { display: block; }
+
+    .cb { appearance: none; width: 18px; height: 18px; border: 2px solid var(--sage); border-radius: 4px; flex-shrink: 0; cursor: pointer; transition: all .18s; position: relative; }
+    .cb:checked { background: var(--moss); border-color: var(--moss); }
+    .cb:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #fff; font-size: .72rem; font-weight: 700; }
+
+    .item-label { flex: 1; font-size: .9rem; line-height: 1.3; cursor: pointer; transition: color .18s; }
+    .item.checked .item-label { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--sage); }
+    .item-label-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: .9rem; border: none; border-bottom: 1.5px solid var(--moss); outline: none; background: transparent; color: var(--charcoal); padding: 0; }
+
+    .item-delete { opacity: 0; background: none; border: none; color: #c0392b; cursor: pointer; font-size: 1rem; padding: .1rem .3rem; border-radius: 4px; transition: opacity .18s; line-height: 1; flex-shrink: 0; }
+    .item:hover .item-delete { opacity: .45; }
+    .item-delete:hover { opacity: 1 !important; }
+
+    .add-item { display: flex; gap: .5rem; padding: .6rem 1.25rem .75rem; }
+    .add-inp { flex: 1; font-family: 'DM Sans', sans-serif; font-size: .85rem; border: 1.5px solid var(--line); border-radius: 8px; padding: .45rem .75rem; background: var(--paper); color: var(--charcoal); outline: none; transition: border-color .18s; }
+    .add-inp:focus { border-color: var(--moss); }
+    .add-inp::placeholder { color: var(--muted); }
+    .add-btn { background: var(--moss); color: #fff; border: none; border-radius: 8px; padding: .45rem .9rem; font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .18s; white-space: nowrap; }
+    .add-btn:hover { background: var(--forest); }
+
+    .add-category-wrap { display: none; background: #fff; border-radius: 12px; border: 1.5px dashed var(--sage); padding: 1rem 1.25rem; margin-bottom: 1.25rem; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .add-category-wrap.visible { display: flex; }
+
+    .loading-screen { display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 1rem; }
+    .loading-screen .emoji { font-size: 2.5rem; }
+    .loading-screen p { font-family: 'DM Sans', sans-serif; color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+
+<div id="loading" class="loading-screen">
+  <div class="emoji">🇬🇧</div>
+  <p>Lijst laden…</p>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <div class="header-inner">
+      <div class="header-text">
+        <h1>🇬🇧 Paklijst Engeland</h1>
+        <p id="syncLabel">Verbinden…</p>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label">Gepakt</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-count" id="progressCount">0 / 0</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <button class="btn btn-outline" onclick="expandAll()">Uitklappen</button>
+    <button class="btn btn-outline" onclick="collapseAll()">Inklappen</button>
+    <button class="btn btn-outline" onclick="resetAll()">Reset vinkjes</button>
+    <button class="btn btn-danger" onclick="clearChecked()">Verwijder afgevinkt</button>
+    <button class="btn btn-outline" id="editBtn" onclick="toggleEdit()">✏️ Bewerken</button>
+  </div>
+
+  <div class="edit-hint">
+    <div class="edit-hint-inner" id="editHint">
+      ✏️ <strong>Bewerkingsmodus:</strong> Sleep ⠿ om volgorde te wijzigen · Klik op tekst of emoji om te bewerken
+    </div>
+  </div>
+
+  <main>
+    <div class="done-banner" id="doneBanner">
+      <span class="done-emoji">🎉</span>
+      <p>Klaar om te vertrekken!</p>
+    </div>
+    <div id="categories"></div>
+    <div class="add-category-wrap" id="addCatWrap">
+      <input class="add-inp" id="addCatInput" placeholder="Nieuwe categorienaam…" onkeydown="if(event.key==='Enter')addCategory()" style="min-width:140px" />
+      <button class="add-btn" onclick="addCategory()">+ Categorie</button>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// Zelfde Firebase project als de daktent-paklijst, eigen "vakje" in de database
+const firebaseConfig = {
+  apiKey: "AIzaSyBisIeAMOmSx-easSuxI-z3UBKqqKxt-Cg",
+  databaseURL: "https://daktent-lijst-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "daktent-lijst",
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const dbRef = ref(db, "paklijst-engeland");
+
+const defaultData = [
+  { id:"kleding",  icon:"👗", title:"Kleding",  items:["Onderbroeken (voor elke dag)","Sokken","T-shirts / topjes","Trui of vest","Jeans/broek","Jurk(en)","Regenjas","Warme jas","Pyjama","Sjaal, muts en handschoenen"] },
+  { id:"eten",     icon:"🍫", title:"Eten",     items:["Snacks voor onderweg","Waterfles","Reepjes/koekjes","Theezakjes van thuis","Snoepjes voor in de auto/trein"] },
+  { id:"makeup",   icon:"💄", title:"Make-up",  items:["Foundation","Mascara","Lippenstift/lipgloss","Oogschaduw palette","Blush/bronzer","Make-up remover doekjes","Nagellak","Make-up kwastjes","Spiegeltje"] },
+  { id:"schoenen", icon:"👠", title:"Schoenen", items:["Wandelschoenen","Sneakers","Nette schoenen/hakken","Slippers","Extra paar sokken"] },
+  { id:"tassen",   icon:"👜", title:"Tassen",   items:["Handtas","Rugzak/dagtas","Weekendtas/koffer","Toilettas","Opvouwbare extra tas voor souvenirs"] },
+];
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function makeState() {
+  return defaultData.map(cat => ({
+    id: cat.id, icon: cat.icon, title: cat.title, open: true,
+    items: cat.items.map(label => ({ label, checked: false, id: uid() }))
+  }));
+}
+
+let state = [];
+let editMode = false;
+let ignoreNext = false;
+let dragInfo = null;
+let dragOver = null;
+
+// Firebase verwijdert lege arrays bij opslaan; dit garandeert dat cat.items altijd een array is
+function normalize(data) {
+  return data.map(cat => ({ ...cat, items: Array.isArray(cat.items) ? cat.items : [] }));
+}
+
+onValue(dbRef, snap => {
+  if (ignoreNext) { ignoreNext = false; return; }
+  const val = snap.val();
+  if (val && Array.isArray(val)) {
+    state = normalize(val);
+  } else if (!val) {
+    state = makeState();
+    saveToFirebase();
+  }
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  setSyncStatus("ok");
+  render();
+});
+
+async function saveToFirebase() {
+  setSyncStatus("busy");
+  try {
+    ignoreNext = true;
+    await set(dbRef, state);
+    setSyncStatus("ok");
+  } catch(e) {
+    setSyncStatus("error");
+    ignoreNext = false;
+    console.error("Save error:", e);
+  }
+}
+
+function setSyncStatus(s) {
+  const labels = { ok:"Gesynchroniseerd ✓", busy:"Opslaan…", error:"Fout bij opslaan ✕" };
+  document.getElementById("syncLabel").textContent = labels[s] || s;
+}
+
+// ── Drag (categorieën) ──
+function onCatDragStart(e, ci) {
+  dragInfo = { type:"cat", ci };
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", String(ci));
+}
+function onCatDragEnd() {
+  dragInfo = null; dragOver = null;
+  document.querySelectorAll(".category").forEach(el => el.classList.remove("is-dragging","drag-over"));
+}
+function onCatDragOver(e, ci) {
+  if (!dragInfo || dragInfo.type !== "cat") return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll(".category").forEach(el => el.classList.remove("drag-over"));
+  document.querySelectorAll(".category")[ci]?.classList.add("drag-over");
+  dragOver = { type:"cat", ci };
+}
+function onCatDrop(e, toCi) {
+  e.preventDefault();
+  document.querySelectorAll(".category").forEach(el => el.classList.remove("drag-over"));
+  if (!dragInfo || dragInfo.type !== "cat") return;
+  const fromCi = dragInfo.ci;
+  dragInfo = null; dragOver = null;
+  if (fromCi === toCi) return;
+  const [moved] = state.splice(fromCi, 1);
+  state.splice(toCi, 0, moved);
+  saveToFirebase(); render();
+}
+
+// ── Drag (items) ──
+function onItemDragStart(e, ci, ii) {
+  dragInfo = { type:"item", ci, ii };
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", `${ci},${ii}`);
+}
+function onItemDragEnd() {
+  dragInfo = null; dragOver = null;
+  document.querySelectorAll(".item").forEach(el => el.classList.remove("is-dragging","drop-above","drop-below"));
+}
+function onItemDragOver(e, ci, ii) {
+  if (!dragInfo || dragInfo.type !== "item") return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll(".item").forEach(el => el.classList.remove("drop-above","drop-below"));
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pos = e.clientY < rect.top + rect.height / 2 ? "above" : "below";
+  e.currentTarget.classList.add(pos === "above" ? "drop-above" : "drop-below");
+  dragOver = { type:"item", ci, ii, pos };
+}
+function onItemDrop(e, toCi, toIi) {
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll(".item").forEach(el => el.classList.remove("drop-above","drop-below"));
+  if (!dragInfo || dragInfo.type !== "item") return;
+  const { ci: fromCi, ii: fromIi } = dragInfo;
+  const pos = dragOver?.pos || "below";
+  dragInfo = null; dragOver = null;
+  const [moved] = state[fromCi].items.splice(fromIi, 1);
+  let insertAt = pos === "above" ? toIi : toIi + 1;
+  if (fromCi === toCi && fromIi < toIi) insertAt--;
+  state[toCi].items.splice(Math.max(0, insertAt), 0, moved);
+  saveToFirebase(); render();
+}
+
+// ── Render ──
+function render() {
+  const container = document.getElementById("categories");
+  container.innerHTML = "";
+
+  let total = 0, checked = 0;
+  state.forEach(c => c.items.forEach(it => { total++; if (it.checked) checked++; }));
+  const pct = total ? Math.round(checked / total * 100) : 0;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressCount").textContent = `${checked} / ${total}`;
+  document.getElementById("doneBanner").classList.toggle("visible", total > 0 && checked === total);
+  document.body.classList.toggle("edit-mode", editMode);
+  document.getElementById("addCatWrap").classList.toggle("visible", editMode);
+
+  state.forEach((cat, ci) => {
+    const catChecked = cat.items.filter(i => i.checked).length;
+    const allDone = catChecked === cat.items.length && cat.items.length > 0;
+
+    const card = document.createElement("div");
+    card.className = "category" + (cat.open ? " open" : "");
+    card.dataset.ci = ci;
+    card.addEventListener("dragover", e => onCatDragOver(e, ci));
+    card.addEventListener("drop",     e => onCatDrop(e, ci));
+
+    const hdr = document.createElement("div");
+    hdr.className = "cat-header";
+
+    if (editMode) {
+      const handle = document.createElement("span");
+      handle.className = "cat-drag-handle";
+      handle.textContent = "⠿";
+      handle.draggable = true;
+      handle.addEventListener("dragstart", e => { e.stopPropagation(); onCatDragStart(e, ci); });
+      handle.addEventListener("dragend", onCatDragEnd);
+      hdr.appendChild(handle);
+    }
+
+    const icon = document.createElement("span");
+    icon.className = "cat-icon";
+    icon.textContent = cat.icon;
+    if (editMode) {
+      icon.title = "Klik om emoji te wijzigen";
+      icon.addEventListener("click", e => { e.stopPropagation(); pickIcon(ci); });
+    }
+
+    let titleEl;
+    if (editMode) {
+      titleEl = document.createElement("input");
+      titleEl.className = "cat-title-input";
+      titleEl.value = cat.title;
+      titleEl.addEventListener("change", () => { state[ci].title = titleEl.value; saveToFirebase(); });
+      titleEl.addEventListener("click", e => e.stopPropagation());
+    } else {
+      titleEl = document.createElement("span");
+      titleEl.className = "cat-title";
+      titleEl.textContent = cat.title;
+    }
+
+    const badge = document.createElement("span");
+    badge.className = "cat-badge" + (allDone ? " done" : "");
+    badge.textContent = `${catChecked}/${cat.items.length}`;
+
+    const right = document.createElement("div");
+    right.style.cssText = "display:flex;align-items:center;gap:.5rem;flex-shrink:0";
+
+    if (editMode) {
+      const delBtn = document.createElement("button");
+      delBtn.className = "cat-delete-btn";
+      delBtn.textContent = "✕";
+      delBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        if (confirm(`Categorie "${cat.title}" verwijderen?`)) { state.splice(ci, 1); saveToFirebase(); render(); }
+      });
+      right.appendChild(delBtn);
+    }
+
+    const toggleBtn = document.createElement("div");
+    toggleBtn.className = "cat-toggle";
+    toggleBtn.addEventListener("click", () => { state[ci].open = !state[ci].open; saveToFirebase(); render(); });
+    const arrow = document.createElement("span");
+    arrow.className = "cat-arrow";
+    arrow.textContent = "▼";
+    toggleBtn.appendChild(arrow);
+    right.appendChild(toggleBtn);
+
+    hdr.append(icon, titleEl, badge, right);
+
+    const body = document.createElement("div");
+    body.className = "cat-body";
+
+    cat.items.forEach((it, ii) => {
+      const row = document.createElement("div");
+      row.className = "item" + (it.checked ? " checked" : "");
+      row.dataset.ci = ci;
+      row.dataset.ii = ii;
+      row.addEventListener("dragover",  e => onItemDragOver(e, ci, ii));
+      row.addEventListener("dragleave", () => row.classList.remove("drop-above","drop-below"));
+      row.addEventListener("drop",      e => onItemDrop(e, ci, ii));
+
+      if (editMode) {
+        const handle = document.createElement("span");
+        handle.className = "item-drag-handle";
+        handle.textContent = "⠿";
+        handle.draggable = true;
+        handle.addEventListener("dragstart", e => { e.stopPropagation(); onItemDragStart(e, ci, ii); });
+        handle.addEventListener("dragend", onItemDragEnd);
+        row.appendChild(handle);
+      }
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "cb";
+      cb.checked = it.checked;
+      cb.addEventListener("change", () => { state[ci].items[ii].checked = cb.checked; saveToFirebase(); render(); });
+
+      let labelEl;
+      if (editMode) {
+        labelEl = document.createElement("input");
+        labelEl.className = "item-label-input";
+        labelEl.value = it.label;
+        labelEl.addEventListener("change", () => { state[ci].items[ii].label = labelEl.value; saveToFirebase(); });
+        labelEl.addEventListener("mousedown", e => e.stopPropagation());
+      } else {
+        labelEl = document.createElement("label");
+        labelEl.className = "item-label";
+        labelEl.textContent = it.label;
+        labelEl.addEventListener("click", () => { state[ci].items[ii].checked = !state[ci].items[ii].checked; saveToFirebase(); render(); });
+      }
+
+      const del = document.createElement("button");
+      del.className = "item-delete";
+      del.textContent = "✕";
+      del.addEventListener("click", e => { e.stopPropagation(); state[ci].items.splice(ii, 1); saveToFirebase(); render(); });
+
+      row.append(cb, labelEl, del);
+      body.appendChild(row);
+    });
+
+    const addRow = document.createElement("div");
+    addRow.className = "add-item";
+    const addInp = document.createElement("input");
+    addInp.className = "add-inp";
+    addInp.placeholder = "Voeg item toe…";
+    addInp.id = "add-" + cat.id;
+    addInp.addEventListener("keydown", e => { if (e.key === "Enter") addItem(ci); });
+    const addBtn = document.createElement("button");
+    addBtn.className = "add-btn";
+    addBtn.textContent = "+ Voeg toe";
+    addBtn.addEventListener("click", () => addItem(ci));
+    addRow.append(addInp, addBtn);
+    body.appendChild(addRow);
+
+    card.append(hdr, body);
+    container.appendChild(card);
+  });
+}
+
+// ── Acties ──
+window.addItem = function(ci) {
+  const inp = document.getElementById("add-" + state[ci].id);
+  const val = inp.value.trim();
+  if (!val) return;
+  if (!Array.isArray(state[ci].items)) state[ci].items = [];
+  state[ci].items.push({ label: val, checked: false, id: uid() });
+  inp.value = "";
+  saveToFirebase(); render();
+};
+
+window.addCategory = function() {
+  const inp = document.getElementById("addCatInput");
+  const val = inp.value.trim();
+  if (!val) return;
+  state.push({ id: uid(), icon: "📦", title: val, open: true, items: [] });
+  inp.value = "";
+  saveToFirebase(); render();
+};
+
+window.toggleEdit = function() {
+  editMode = !editMode;
+  const btn = document.getElementById("editBtn");
+  btn.textContent = editMode ? "✅ Klaar" : "✏️ Bewerken";
+  btn.classList.toggle("btn-active", editMode);
+  document.getElementById("editHint").classList.toggle("visible", editMode);
+  render();
+};
+
+window.expandAll   = () => { state.forEach(c => c.open = true);  saveToFirebase(); render(); };
+window.collapseAll = () => { state.forEach(c => c.open = false); saveToFirebase(); render(); };
+window.resetAll    = () => { state.forEach(c => c.items.forEach(i => i.checked = false)); saveToFirebase(); render(); };
+
+window.clearChecked = () => {
+  const count = state.reduce((a,c) => a + c.items.filter(i => i.checked).length, 0);
+  if (count === 0) { alert("Er zijn geen afgevinkte items om te verwijderen."); return; }
+  if (!confirm(`Weet je zeker dat je ${count} afgevinkt item(s) wilt verwijderen? Dit kan niet ongedaan gemaakt worden.`)) return;
+  state.forEach(c => c.items = c.items.filter(i => !i.checked));
+  saveToFirebase(); render();
+};
+
+window.pickIcon = function(ci) {
+  const icons = ["👗","🍫","💄","👠","👜","🧴","🧳","✈️","🌂","🕶️","👒","💍"];
+  const chosen = prompt(`Kies een emoji (huidig: ${state[ci].icon})\n\nVoorbeelden: ${icons.join(" ")}`);
+  if (chosen && chosen.trim()) { state[ci].icon = chosen.trim(); saveToFirebase(); render(); }
+};
+</script>
+</body>
+</html>
